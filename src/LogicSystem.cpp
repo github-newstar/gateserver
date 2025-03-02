@@ -1,5 +1,6 @@
 #include "LogicSystem.hpp"
 #include "const.h"
+#include "MysqlMgr.hpp"
 #include "HttpConnection.hpp"
 #include <json/json.h>
 #include <json/reader.h>
@@ -85,7 +86,7 @@ LogicSystem::LogicSystem() {
                 return true;
             }
             auto email = src_root["email"].asString();
-            auto user = src_root["user"].asString();
+            auto name = src_root["user"].asString();
             auto pwd = src_root["passwd"].asString();
             auto confirm = src_root["confirm"].asString();
             //二次密码校验
@@ -115,10 +116,19 @@ LogicSystem::LogicSystem() {
                 return true;
             }
             
-            // TODO: 接入mysql判断是否存在该用户
+            // 接入mysql判断是否存在该用户
+            int uid = MysqlMgr::GetInstance()->RegUser(name, email, pwd);
+            if(uid == 0 || uid == -1){
+                std::cout << "reg user failed" << std::endl;
+                root["error"] = ErrorCodes::UserExist;
+                std::string jsonStr = root.toStyledString();
+                beast::ostream(connection->response_.body()) << jsonStr;
+                return true;
+            }
             
             root["error"] = ErrorCodes::Success;
             root["email"] = src_root["email"];
+            root["uid"] = uid;
             root ["user"]= src_root["user"].asString();
             root["passwd"] = src_root["passwd"].asString();
             root["confirm"] = src_root["confirm"].asString();
@@ -128,6 +138,70 @@ LogicSystem::LogicSystem() {
             return true;
     });
     
+    RegPost("/reset_pwd", [](std::shared_ptr<HttpConnection> connection){
+            auto bodyStr = boost::beast::buffers_to_string(connection->request_.body().data());
+            std::cout << "receive body is " << bodyStr << std::endl;
+            connection->response_.set(http::field::content_type, "text/json");
+            Json::Value root;
+            Json::Reader reader;
+            Json::Value src_root;
+            bool parseSuccess = reader.parse(bodyStr, src_root);
+            if(!parseSuccess){
+                std::cout << "parse json failed" << std::endl;
+                root["error"] = ErrorCodes::ErrorJson;
+                std::string jsonStr = root.toStyledString();
+                beast::ostream(connection->response_.body()) << jsonStr;
+                return true;
+            }
+
+            auto email = src_root["email"].asString();
+            auto name = src_root["user"].asString();
+            auto pwd = src_root["passwd"].asString();
+            
+            //在redis中检查email对应的验证码是否合理
+            std::string varifyCode;
+            bool b_get_varify = RedisMgr::GetInstance()->Get(CODEPREFIX + src_root["email"].asString(), varifyCode);
+            if(!b_get_varify){
+                std::cout << "get varify code expired" << std::endl;
+                root["error"] = ErrorCodes::VarifyExpired;
+                std::string jsonStr = root.toStyledString();
+                beast::ostream(connection->response_.body()) << jsonStr;
+                return true;
+            }
+            
+            //查数据库判断用户名和邮箱是否匹配
+            bool emailValid = MysqlMgr::GetInstance()->CheckEmail(name ,email);
+            if(!emailValid){
+                std::cout << "email not match" << std::endl;
+                root["error"] = ErrorCodes::EmailNotMatch;
+                std::string jsonStr = root.toStyledString();
+                beast::ostream(connection->response_.body()) << jsonStr;
+                return true;
+            }
+            
+            //更新密码
+            bool b_up = MysqlMgr::GetInstance()->UpdatePwd(name, pwd);
+            if(!b_up){
+                std::cout << "update passwd failed" << std::endl;
+                root["error"] = ErrorCodes::PasswdUpFailed;
+                std::string jsonStr = root.toStyledString();
+                beast::ostream(connection->response_.body()) << jsonStr;
+                return true;
+            }
+            
+            std::cout << "success to update passwd" << std::endl;
+            root["error"] = ErrorCodes::Success;
+            root["email"] = email;
+            root["user"] = name;
+            root["passwd"] = pwd;
+            root["varifycode"] = src_root["varifycode"].asString();
+            
+            std::string jsonstr= root.toStyledString();
+            beast::ostream(connection->response_.body()) << jsonstr;
+            return true;
+
+        });
+
 
 }
 LogicSystem::~LogicSystem(){};

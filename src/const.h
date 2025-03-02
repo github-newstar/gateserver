@@ -18,7 +18,7 @@ enum ErrorCodes{
     VarifyErr = 1004, // 验证码错误
     UserExist = 1005, // 用户已存在
     PasswdErr = 1006, // 密码错误
-    EamilNotMatch = 1007, // 邮箱不匹配
+    EmailNotMatch = 1007, // 邮箱不匹配
     PasswdUpFailed = 1008, // 密码更新失败
     PasswdInalid = 1009, // 密码无效
 
@@ -26,4 +26,16 @@ enum ErrorCodes{
 
 class ConfigMgr;
 extern ConfigMgr gCfgMgr;
+class Defer{
+public:
+    //接受一个lambda表达式或者函数指针
+    Defer(std::function<void()> func) : func_(func){}
+    
+    //析构函数中执行传入的函数
+    ~Defer(){
+        func_();
+    }
+private:
+    std::function<void()> func_;
+};
 #define CODEPREFIX "code_"

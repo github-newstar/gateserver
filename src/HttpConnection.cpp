@@ -1,5 +1,6 @@
 #include "HttpConnection.hpp"
 #include <iostream>
+#include <string>
 #include "LogicSystem.hpp"
 
 HttpConnection::HttpConnection(boost::asio::io_context & ioc) : socket_(ioc) {
@@ -110,7 +111,7 @@ void HttpConnection::HandleRequest() {
         return;
     }
     if(request_.method() == http::verb::post){
-        bool success = LogicSystem::GetInstance()->HandlePost(request_.target(), shared_from_this());
+        bool success = LogicSystem::GetInstance()->HandlePost(std::string(request_.target()), shared_from_this());
         if(!success){
             response_.result(http::status::not_found);
             response_.set(http::field::content_type, "text/plain");
@@ -151,11 +152,11 @@ void HttpConnection::PreaParseGetParam(){
     // 查找查询字符串的开始位置（即 '?' 的位置）  
     auto query_pos = uri.find('?');
     if (query_pos == std::string::npos) {
-        getUrl_ = uri;
+        getUrl_ = std::string(uri);
         return;
     }
-    getUrl_ = uri.substr(0, query_pos);
-    std::string query_string = uri.substr(query_pos + 1);
+    getUrl_ = std::string(uri.substr(0, query_pos));
+    std::string query_string = std::string(uri.substr(query_pos + 1));
     std::string key;
     std::string value;
     size_t pos = 0;

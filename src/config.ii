@@ -2,9 +2,15 @@
 Host=127.0.0.1
 Port=8080
 [VarifyServer]
-Host=127.0.0.1
+Host=varifyServer
 Port=50051
 [Redis]
 Host=chat-redis
 Port=6379
+Passwd=123456
+[Mysql]
+User=root
+Host=mq
+Port=3306
+Schema=chatdb
 Passwd=123456
