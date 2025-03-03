@@ -3,9 +3,12 @@
 #include "message.grpc.pb.h"
 // #include "const.h"
 #include "Singleton.hpp"
+#include <memory>
 #include<queue>
 #include<mutex>
 #include<condition_variable>
+//模板化了grpcpool
+#include"GrpcPool.hpp"
 
 using grpc::Channel;
 using grpc::Status;
@@ -13,21 +16,7 @@ using grpc::ClientContext;
 using message::VarifyService;
 using message::GetVarifyReq;
 using message::GetVarifyRsp;
-class RPCconPool {
-  public:
-    RPCconPool(size_t poolSize, std::string host, std::string port); ~RPCconPool();
-    std::unique_ptr<VarifyService::Stub> getConnection();
-    void returnConnection(std::unique_ptr<VarifyService::Stub> cotext);
-    void Close();
-  private:
-  std::atomic_bool bStop_;
-  std::size_t poolSize_;
-  std::string host_;
-  std::string port_;
-  std::queue<std::unique_ptr<VarifyService::Stub>> connections_;;
-  std::mutex mutex_;
-  std::condition_variable cond_;
-};
+
 
 class VarifyGrpcClient : public Singleton<VarifyGrpcClient>
 {
@@ -37,5 +26,6 @@ public:
     
 private:
     VarifyGrpcClient();
-    std::unique_ptr<RPCconPool> pool_;
+    // std::unique_ptr<RPCconPool> pool_;
+    std::unique_ptr<GrpcPool<VarifyService, VarifyService::Stub>> pool_;
 };

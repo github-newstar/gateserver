@@ -20,7 +20,7 @@ enum ErrorCodes{
     PasswdErr = 1006, // 密码错误
     EmailNotMatch = 1007, // 邮箱不匹配
     PasswdUpFailed = 1008, // 密码更新失败
-    PasswdInalid = 1009, // 密码无效
+    PasswdInvalid = 1009, // 密码无效
 
 };
 
