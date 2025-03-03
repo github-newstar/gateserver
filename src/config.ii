@@ -4,6 +4,9 @@ Port=8080
 [VarifyServer]
 Host=varifyServer
 Port=50051
+[StatusServer]
+Host=127.0.0.1
+Prot=50052
 [Redis]
 Host=chat-redis
 Port=6379
