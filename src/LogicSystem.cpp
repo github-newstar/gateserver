@@ -7,6 +7,7 @@
 #include "VarifyGrpcClient.hpp"
 #include "RedisMgr.hpp"
 #include "src/MysqlDao.hpp"
+#include "StatusGrpcClient.hpp"
 
 bool LogicSystem::HandleGet(std::string path, std::shared_ptr<HttpConnection> con) {
     if(getHandlers_.find(path) == getHandlers_.end()){
@@ -221,9 +222,9 @@ LogicSystem::LogicSystem() {
         
         auto email = src_root["email"].asString();
         auto pwd = src_root["passwd"].asString();
-        UerInfo uesrInfo;
+        UerInfo userInfo;
         //在mysql中检查邮箱和密码是否匹配
-        bool pwdValid = MysqlMgr::GetInstance()->CheckPwd(email, pwd, uesrInfo);
+        bool pwdValid = MysqlMgr::GetInstance()->CheckPwd(email, pwd, userInfo);
         if(!pwdValid){
             std::cout << "passwd not match" << std::endl;
             root["error"] = ErrorCodes::PasswdInvalid;
@@ -232,23 +233,25 @@ LogicSystem::LogicSystem() {
             return true;
         }
         //查询statusserver寻找合适的连接
-        // auto reply = StatusServer::GetInstance()->GetChatServer(UerInfo.uid);
-        // if(reply.error()){
-        //     std::cout << "get chat server failed" << std::endl;
-        //     root["error"] = ErrorCodes::RPCFailed;
-        //     std::string jsonStr = root.toStyledString();
-        //     beast::ostream(connection->response_.body()) << jsonStr;
-        //     return true;
-        // }
-        // std::cout << "success to load uesrinfo is " << uesrInfo.uid << std::endl;
-        // root["error"] = ErrorCodes::Success;
-        // root["email"] = email;
-        // root["uid"] = uesrInfo.uid;
-        // root["token"] = reply.token();
-        // root["host"] = reply.host();
-        // root["port"] = reply.port();
-        // std::string jsonstr = root.toStyledString();
-        // beast::ostream(connection->response_.body()) << jsonstr;
+         auto reply = StatusGrpcClient::GetInstance()->GetChatServer(userInfo.uid);
+         if(reply.error()){
+             std::cout << "get chat server failed" << std::endl;
+             root["error"] = ErrorCodes::RPCFailed;
+             std::string jsonStr = root.toStyledString();
+             beast::ostream(connection->response_.body()) << jsonStr;
+             return true;
+         }
+         std::cout << "success to load uesrinfo is " << userInfo.uid << std::endl;
+         root["user"] = userInfo.name;
+         root["error"] = ErrorCodes::Success;
+         root["email"] = email;
+         root["uid"] = userInfo.uid;
+         root["token"] = reply.token();
+         root["host"] = reply.host();
+         root["port"] = reply.port();
+         std::cerr<< "port is" << reply.port() << std::endl;
+         std::string jsonstr = root.toStyledString();
+         beast::ostream(connection->response_.body()) << jsonstr;
         return true;
         
         

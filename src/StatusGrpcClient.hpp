@@ -15,7 +15,7 @@ class StatusGrpcClient : public Singleton<StatusGrpcClient>
 {
     friend class Singleton<StatusGrpcClient>;
 public:
-    ~StatusGrpcClient();
+    ~StatusGrpcClient(){}
     GetChatServerRsp GetChatServer(const int uid);
 private:
     StatusGrpcClient();

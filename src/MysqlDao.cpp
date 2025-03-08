@@ -20,7 +20,12 @@ MysqlDao::~MysqlDao(){
 
 int MysqlDao::RegUser(const std::string &name,  const std::string &email, const std::string &pwd){
     auto con = pool_->getConnection();
-    Defer defer([&con, this](){
+    std::unique_ptr<sql::ResultSet> res = nullptr;
+
+    Defer defer([&con,&res, this](){
+        if(res){
+            res->close();
+        }
         pool_->returnConnection(std::move(con));
     });
     try{
@@ -42,7 +47,7 @@ int MysqlDao::RegUser(const std::string &name,  const std::string &email, const 
         stmt->execute();
         
         std::unique_ptr<sql::Statement> stmtResult(con->con_->createStatement());
-        std::unique_ptr<sql::ResultSet> res(stmtResult->executeQuery("SELECT @result AS result"));
+        res.reset(stmtResult->executeQuery("SELECT @result AS result"));
         
         if(res->next()){
             int result = res->getInt("result");
@@ -61,7 +66,11 @@ int MysqlDao::RegUser(const std::string &name,  const std::string &email, const 
 }
 bool MysqlDao::CheckEmail(const std::string &name, const std::string &email) {
     auto con = pool_->getConnection();
-    Defer defer([&con, this](){
+    std::unique_ptr<sql::ResultSet> res = nullptr;
+    Defer defer([&con, &res, this](){
+        if(res){
+            res->close();
+        }
         pool_->returnConnection(std::move(con));
     });
     try{
@@ -77,10 +86,10 @@ bool MysqlDao::CheckEmail(const std::string &name, const std::string &email) {
         stmt->setString(1, name);
         
         //执行查询
-        std::unique_ptr<sql::ResultSet> res(stmt->executeQuery());
+        res.reset(stmt->executeQuery());
 
         //遍历结果集
-        while(res->next()){
+        if(res->next()){
             std::cout << "Check email" << res->getString("email") << std::endl;
             if (email != res->getString("email")) {
                 return false;
@@ -136,7 +145,10 @@ bool MysqlDao::UpdatePwd(const std::string &name, const std::string &newpwd) {
 bool MysqlDao::CheckPwd(const std::string &email, const std::string &pwd,
                         UerInfo &info){
     auto con = pool_->getConnection();
-    Defer defer([&con, this]() { pool_->returnConnection(std::move(con)); });
+    std::unique_ptr<sql::ResultSet> res = nullptr;
+    Defer defer([&con, &res,  this]() { 
+        if(res) res->close();
+        pool_->returnConnection(std::move(con)); });
     try {
         if (con == nullptr) {
             return false;
@@ -149,7 +161,7 @@ bool MysqlDao::CheckPwd(const std::string &email, const std::string &pwd,
         stmt->setString(1, email);
 
         // 执行查询
-        std::unique_ptr<sql::ResultSet> res(stmt->executeQuery());
+        res.reset(stmt->executeQuery());
         std::string originPwd = "";
         while (res->next()) {
             originPwd = res->getString("pwd");

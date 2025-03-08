@@ -6,7 +6,7 @@ Host=varifyServer
 Port=50051
 [StatusServer]
 Host=127.0.0.1
-Prot=50052
+Port=50052
 [Redis]
 Host=chat-redis
 Port=6379
@@ -17,3 +17,7 @@ Host=mq
 Port=3306
 Schema=chatdb
 Passwd=123456
+[ChatServer1]
+Name = chatserver1
+Host = 127.0.0.1
+Port = 8090
