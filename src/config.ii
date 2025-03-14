@@ -1,11 +1,11 @@
 [GateServer]
-Host=127.0.0.1
+Host=gateServer
 Port=8080
 [VarifyServer]
 Host=varifyServer
 Port=50051
 [StatusServer]
-Host=127.0.0.1
+Host=statusServer
 Port=50052
 [Redis]
 Host=chat-redis
@@ -19,5 +19,5 @@ Schema=chatdb
 Passwd=123456
 [ChatServer1]
 Name = chatserver1
-Host = 127.0.0.1
-Port = 8090
+Host = chatserver1
+Port = 8091

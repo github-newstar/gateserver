@@ -92,7 +92,7 @@ class MySqlPool{
                     std::cout << " execute timer alive query, query is " << timeStap << std::endl;
                 }
                 catch(sql::SQLException &e){
-                    std::cout << "Error keeping connection alive :" << std::endl;
+                    std::cout << "Error keeping connection alive :" << e.what()<< std::endl;
                     sql::mysql::MySQL_Driver *driver = sql::mysql::get_mysql_driver_instance();
                     auto *newCon = driver->connect(url_, user_, pass_);
                     newCon->setSchema(schema_);

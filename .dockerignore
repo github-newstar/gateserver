@@ -1,0 +1,5 @@
+src/.clangd
+src/.clang-format
+src/message.proto
+.git/
+.github/
