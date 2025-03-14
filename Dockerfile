@@ -57,4 +57,4 @@ RUN echo "/usr/lib64" >> /etc/ld.so.conf.d/mysql-connector-cpp.conf && \
     ldconfig
 
 WORKDIR /root/gateserver
-CMD ["/root/gateserver/chatServer"]
+CMD ["/root/gateserver/gateserver"]
