@@ -145,8 +145,10 @@ bool MysqlDao::UpdatePwd(const std::string &name, const std::string &newpwd) {
 bool MysqlDao::CheckPwd(const std::string &email, const std::string &pwd,
                         UerInfo &info){
     auto con = pool_->getConnection();
-    Defer defer([&con,   this]() { 
+    std::unique_ptr<sql::ResultSet> res = nullptr;
+    Defer defer([&con, &res,  this]() { 
         pool_->returnConnection(std::move(con)); });
+        if(res)res->close();
     try {
         if (con == nullptr) {
             return false;
@@ -159,7 +161,7 @@ bool MysqlDao::CheckPwd(const std::string &email, const std::string &pwd,
         stmt->setString(1, email);
 
         // 执行查询
-        std::unique_ptr<sql::ResultSet>res(stmt->executeQuery());
+        res.reset(stmt->executeQuery());
         std::string originPwd = "";
         while (res->next()) {
             originPwd = res->getString("pwd");
@@ -177,7 +179,6 @@ bool MysqlDao::CheckPwd(const std::string &email, const std::string &pwd,
         info.pwd = originPwd;
         info.uid = res->getInt("uid");
 
-        res->close();
         return true;
     } catch (sql::SQLException &e) {
         std::cerr << "SQL EXCEPTION: " << e.what();

@@ -87,7 +87,25 @@ class MySqlPool{
                 
                 try{
                     std::unique_ptr<sql::Statement> stmt(con->con_->createStatement());
-                    stmt->execute("select 1");
+                    bool hasResults = stmt->execute("select 1");
+                    // 消费所有结果集
+                    if (hasResults) {
+                        std::unique_ptr<sql::ResultSet> res(
+                            stmt->getResultSet());
+                        while (res->next()) {
+                            // 读取并丢弃结果
+                        }
+                    }
+
+                    // 检查是否有更多结果集
+                    while (stmt->getMoreResults()) {
+                        std::unique_ptr<sql::ResultSet> res(
+                            stmt->getResultSet());
+                        while (res->next()) {
+                            // 读取并丢弃结果
+                        }
+                    }
+
                     con->lastTime_ = timeStap;
                     std::cout << " execute timer alive query, query is " << timeStap << std::endl;
                 }
@@ -126,6 +144,9 @@ class MySqlPool{
             cond_.notify_all();
         }
         ~MySqlPool(){
+            if(checkThread_.joinable()){
+                checkThread_.join();
+            }
             std::lock_guard<std::mutex> lock(mutex_);
             while(pool_.empty() == false){
                 pool_.pop();
