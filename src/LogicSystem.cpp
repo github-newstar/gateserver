@@ -247,7 +247,13 @@ LogicSystem::LogicSystem() {
          root["email"] = email;
          root["uid"] = userInfo.uid;
          root["token"] = reply.token();
-         root["host"] = reply.host();
+         //host映射
+         std::string gate_host = src_root["gate_host"].asString();
+         if(gate_host != "127.0.0.1" || gate_host != "localhost"){
+             root["host"] = gate_host;
+         }else{
+             root["host"] = reply.host();
+         }
          root["port"] = reply.port();
          std::cerr<< "port is" << reply.port() << std::endl;
          std::string jsonstr = root.toStyledString();
