@@ -32,6 +32,7 @@ void LogicSystem::RegPost(std::string url, HttpHandler handler) {
 LogicSystem::LogicSystem() {
     RegGet("/get_test",[](std::shared_ptr<HttpConnection> connection){
         beast::ostream(connection->response_.body()) << "receive get_test req";
+        std::cout<<"receive get_test req" << std::endl;
     int i = 0;
     for(auto &elem : connection->getParams_){
         i++;
