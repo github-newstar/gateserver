@@ -2,6 +2,7 @@
 #include "const.h"
 #include "MysqlMgr.hpp"
 #include "HttpConnection.hpp"
+#include <iostream>
 #include <json/json.h>
 #include <json/reader.h>
 #include "VarifyGrpcClient.hpp"
@@ -50,7 +51,7 @@ LogicSystem::LogicSystem() {
             connection->response_.set(http::field::content_type, "text/json");
             
             Json::Value root;
-            Json::Reader reader;
+            Json::Reader reader; 
             Json::Value src_root;
             
             bool parseSuccess = reader.parse(bodyStr, src_root);
@@ -67,6 +68,7 @@ LogicSystem::LogicSystem() {
             std::cout <<  "email is " << email << std::endl;
             root["error"] = rsp.error();
             root["email"] = src_root["email"];
+            std::cerr<<"get code success" << std::endl;
             
             std::string jsonStr = root.toStyledString();
             beast::ostream(connection->response_.body()) << jsonStr;
